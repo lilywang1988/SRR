@@ -1,6 +1,7 @@
 #SRR fixed effects model
 library(Matrix)
-SRR_fixed <- function(data0, Y_name, z_names, Fac_name, test = "Score", refer_fac = NULL,
+
+SRR_fixed_cpp <- function(data0, Y_name, z_names, Fac_name, test = "Score", refer_fac = NULL,
                       criterion = 1e-8, max.iter = 500, bound = 8, size_cut = 10){
   Yid <- match(Y_name, colnames(data0))
   if(is.na(Yid)){
@@ -79,8 +80,8 @@ SRR_fixed <- function(data0, Y_name, z_names, Fac_name, test = "Score", refer_fa
   m2_cut = table(Fac_cut)
 
   
-  Est = SRR_profile(Y = Y_cut, facility = Fac_cut, z = z_cut, criterion = criterion, max.iter = max.iter, bound = bound)
- # Est2 = SRR_profile2(Y_cut, Fac_cut, z_cut,  m2_cut,criterion, max.iter,  bound)
+  #Est = SRR_profile(Y = Y_cut, facility = Fac_cut, z = z_cut, criterion = criterion, max.iter = max.iter, bound = bound)
+  Est = SRR_profile_cpp(Y_cut, Fac_cut, z_cut,  m2_cut,criterion, max.iter,  bound)
   
    #list(beta.est = beta.est, gamma.est = gamma.est, llk_all = llk_all, rep.n = rep.n-1)
   beta.est = Est$beta.est
@@ -120,54 +121,6 @@ SRR_fixed <- function(data0, Y_name, z_names, Fac_name, test = "Score", refer_fa
 
 
 # to use this function, data should be sorted by facilities.
-SRR_profile <- function(Y = Y, facility = facility, z = z, criterion = 1e-8, max.iter = 200, bound = 8){
-  
-  N = length(Y)
-  nF = length(unique(facility))
-  size = sapply(split(Y,facility), length)
-  gamma.est = rep(0, nF)  #dim(gamma.est)=1*F
-  beta.length = ncol(z)
-  beta.est = rep(0,beta.length)
-  # Method 1 
-  rep.n = 0
-  llk_all = NULL
-  repeat{ #repeat2
-    rep.n = rep.n+1
-    if(rep.n > max.iter){
-      break
-    }
-    print(rep.n)
-    gamma.est.long = rep(gamma.est, size)  
-    p = plogis( gamma.est.long+z%*%beta.est )  #dim=n*1
-    llk = sum(log(p))
-    llk_all = c(llk_all,llk)
-    q = 1-p
-    p.times.q = p*q
-    gamma.update = sapply(split(Y-p,facility), sum)/sapply(split(p.times.q, facility), sum)
-    gamma.est = gamma.est + gamma.update  #dim(gamma.est)=1*F 
-    gamma.est.long = rep(gamma.est, times = size)  #dim(gamma.est.long)=n*1
-    #####  beta
-    p = plogis( gamma.est.long+z%*%beta.est )
-    q = 1-p
-    p.times.q = p*q
-    beta.U = t(Y-p)%*%z
-    beta.I = t(z)%*%(z*c(p.times.q))
-    beta.update = solve(beta.I) %*% t(beta.U)
-    beta.est = beta.est +  beta.update#dim=3*1
-    gamma.est[gamma.est > bound] = bound
-    gamma.est[gamma.est < -bound] = -bound
-    beta.est[beta.est > bound] = bound
-    beta.est[beta.est < -bound] = -bound
-    
-    if( max(abs(c(beta.update))) < criterion ){
-      break
-    } ## end if
-    
-  } ## end repeat2
-  
-  return(list(beta.est = beta.est, gamma.est = gamma.est, llk_all = llk_all, rep.n = rep.n-1))
-}
-
 
 P_value_score_test <- function(proposed_gamma, Y, z, Fac_ind, beta){
   p_ik = 1-1/(exp(z%*%beta+proposed_gamma)+1)
