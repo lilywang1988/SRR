@@ -3,10 +3,10 @@
 using namespace Rcpp;
 using namespace arma;
 // [[Rcpp::export]]
-List SRR_profile_cpp(vec Y,vec Facility, mat z, vec sizev,double criterion,int max_iter,float bound) {
+List SRR_profile_cpp(vec Y,StringVector Facility, mat z, vec sizev,double criterion,int max_iter,float bound) {
   int N, nF;
   N=Y.size();
-  vec Facility_list=unique(Facility);
+  StringVector Facility_list=unique(Facility);
   nF=Facility_list.size();
   vec gamma_est(nF);
   gamma_est.fill(0);

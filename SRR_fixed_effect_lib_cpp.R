@@ -79,6 +79,7 @@ SRR_fixed_cpp <- function(data0, Y_name, z_names, Fac_name, test = "Score", refe
   Fac_cut = Fac_sort[include]
   m2_cut = table(Fac_cut)
 
+  if(!is.character(Fac_cut)){Fac_cut=as.character(Fac_cut)}
   
   #Est = SRR_profile(Y = Y_cut, facility = Fac_cut, z = z_cut, criterion = criterion, max.iter = max.iter, bound = bound)
   Est = SRR_profile_cpp(Y_cut, Fac_cut, z_cut,  m2_cut,criterion, max.iter,  bound)
